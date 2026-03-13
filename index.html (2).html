@@ -1,0 +1,642 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>CRM ESSA – Alumbrado Navideño</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;font-family:'Segoe UI',sans-serif}
+body{background:var(--bg,#f1f5f9)}
+:root{--primary:#0a3d62;--secondary:#1e6fa5;--accent:#22c55e;--bg:#f1f5f9}
+input,select,textarea{width:100%;padding:9px 12px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:14px;outline:none;background:#fff}
+input[type="password"]::-ms-reveal,
+input[type="password"]::-ms-clear,
+input[type="password"]::-webkit-credentials-auto-fill-button,
+input[type="password"]::-webkit-textfield-decoration-container{display:none !important}
+input::-webkit-credentials-auto-fill-button{display:none !important}
+button{cursor:pointer;border:none;border-radius:8px;font-size:13px;font-weight:700}
+table{width:100%;border-collapse:collapse}
+th{padding:10px 14px;text-align:left;font-size:12px;font-weight:700;background:var(--primary);color:#fff}
+td{padding:10px 14px;font-size:13px;border-bottom:1px solid #f1f5f9}
+tr:nth-child(even) td{background:#f8fafc}
+.badge{display:inline-block;padding:2px 10px;border-radius:20px;color:#fff;font-size:11px;font-weight:700}
+.card{background:#fff;border-radius:12px;padding:20px;box-shadow:0 2px 8px rgba(0,0,0,.06);margin-bottom:16px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:0 16px}
+.field{margin-bottom:12px}
+.field label{font-size:12px;color:#64748b;display:block;margin-bottom:4px}
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:1000;display:none;align-items:center;justify-content:center;padding:16px}
+.modal-box{background:#fff;border-radius:16px;padding:28px;width:100%;max-width:660px;max-height:92vh;overflow-y:auto}
+.sello{margin-top:20px;text-align:center;font-size:11px;color:#94a3b8;border-top:1px solid #e2e8f0;padding-top:10px}
+.nav-btn{display:flex;align-items:center;gap:10px;width:100%;padding:10px 12px;margin-bottom:4px;background:transparent;border:none;border-radius:8px;color:#fff;font-size:13px;text-align:left}
+.nav-btn.active{background:var(--secondary);font-weight:700}
+.filter-btn{padding:6px 14px;border:none;border-radius:20px;cursor:pointer;background:#e2e8f0;color:#374151;font-size:12px;margin-right:6px;margin-bottom:6px}
+.filter-btn.active{background:var(--primary);color:#fff;font-weight:700}
+.kpi-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:24px}
+.chart-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px}
+.avatar{width:72px;height:72px;border-radius:50%;object-fit:cover;background:#dbeafe;display:flex;align-items:center;justify-content:center;font-size:28px;overflow:hidden}
+.avatar img{width:100%;height:100%;object-fit:cover;border-radius:50%}
+.pass-wrap{position:relative}
+.pass-wrap input{padding-right:44px}
+.eye-btn{background:none;border:none;font-size:18px;cursor:pointer;padding:0;font-weight:400}
+.cfg-section{background:#f8fafc;border-radius:10px;padding:16px;margin-bottom:16px}
+.cfg-section h3{color:var(--primary);font-size:14px;margin-bottom:12px}
+.color-row{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.color-row label{font-size:13px;flex:1}
+.color-row input[type=color]{width:48px;height:32px;padding:2px;border-radius:6px;border:1px solid #e2e8f0;cursor:pointer}
+.upload-btn{display:inline-block;padding:7px 14px;background:#e2e8f0;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600;color:#374151}
+.upload-btn:hover{background:#cbd5e1}
+.photo-circle{width:64px;height:64px;border-radius:50%;object-fit:cover;border:2px solid #e2e8f0}
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="pg-login" style="min-height:100vh;background:linear-gradient(135deg,var(--primary),var(--secondary));display:flex;align-items:center;justify-content:center">
+  <div style="background:#fff;border-radius:16px;padding:40px 48px;width:400px;box-shadow:0 20px 60px rgba(0,0,0,.3)">
+    <div style="text-align:center;margin-bottom:28px">
+      <div id="login-logo" style="font-size:44px;margin-bottom:4px">🎄</div>
+      <div style="font-weight:800;font-size:22px;color:var(--primary)">CRM ESSA</div>
+      <div style="font-size:13px;color:#64748b">Alumbrado Navideño · Gestión Comercial</div>
+    </div>
+    <div class="field"><label>Correo electrónico</label><input id="f-email" type="text" autocomplete="off" placeholder="correo@essa.com.co"/></div>
+    <div class="field"><label>Contraseña</label>
+      <div class="pass-wrap"><input id="f-pass" type="password" autocomplete="off" placeholder="Contraseña"/>
+        <button class="eye-btn" onclick="togglePass('f-pass','eye1')" id="eye1" style="background:none;border:none;position:absolute;right:10px;top:50%;transform:translateY(-50%);cursor:pointer;font-size:18px;padding:0;line-height:1">👁️</button>
+      </div>
+    </div>
+    <div id="f-err" style="color:#ef4444;font-size:13px;min-height:18px;margin-bottom:8px"></div>
+    <button onclick="intentarLogin()" style="width:100%;padding:13px;background:var(--primary);color:#fff;font-size:15px;border-radius:10px;font-weight:800">Ingresar al sistema</button>
+    <div style="margin-top:12px;font-size:11px;color:#94a3b8;text-align:center">Sistema interno ESSA · Acceso restringido</div>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="pg-app" style="display:none;height:100vh;flex-direction:row">
+  <div id="sidebar" style="width:220px;background:var(--primary);display:flex;flex-direction:column;color:#fff;flex-shrink:0;height:100vh;position:fixed;left:0;top:0;overflow-y:auto">
+    <div style="padding:20px 16px 14px;border-bottom:1px solid var(--secondary);text-align:center">
+      <div id="sb-logo-wrap" style="font-size:28px;margin-bottom:4px">🎄</div>
+      <div style="font-weight:800;font-size:14px">CRM ESSA</div>
+      <div style="font-size:10px;color:#90cdf4">Alumbrado Navideño</div>
+    </div>
+    <nav id="nav-menu" style="flex:1;padding:12px 8px"></nav>
+    <div style="padding:12px 16px;border-top:1px solid var(--secondary)">
+      <div id="sb-name" style="color:#90cdf4;font-weight:600;font-size:13px;margin-bottom:2px"></div>
+      <div id="sb-role" style="color:#64748b;font-size:11px;margin-bottom:8px"></div>
+      <button onclick="guardarJSON()" style="width:100%;padding:7px;background:#22c55e;color:#fff;font-size:12px;border-radius:6px;margin-bottom:6px">💾 Guardar datos</button>
+      <label style="display:block;width:100%;padding:7px;background:#f59e0b;color:#fff;font-size:12px;border-radius:6px;text-align:center;cursor:pointer;font-weight:700;margin-bottom:6px">📂 Cargar datos<input type="file" accept=".json" style="display:none" onchange="cargarJSON(this)"/></label>
+      <button onclick="cerrarSesion()" style="width:100%;padding:7px;background:#ef4444;color:#fff;font-size:12px;border-radius:6px">Cerrar sesión</button>
+    </div>
+  </div>
+  <div id="main-content" style="margin-left:220px;flex:1;overflow-y:auto;padding:24px;min-height:100vh">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:24px">
+      <h1 id="page-title" style="font-size:22px;font-weight:800;color:var(--primary)"></h1>
+      <div id="page-date" style="font-size:12px;color:#64748b"></div>
+    </div>
+    <div id="page-content"></div>
+  </div>
+</div>
+
+<!-- MODAL -->
+<div id="modal-overlay" class="modal-overlay" onclick="if(event.target===this)cerrarModal()">
+  <div class="modal-box">
+    <div style="display:flex;justify-content:space-between;margin-bottom:20px">
+      <h2 id="modal-title" style="color:var(--primary);font-size:18px"></h2>
+      <button onclick="cerrarModal()" style="background:none;border:none;font-size:24px;color:#64748b;line-height:1">×</button>
+    </div>
+    <div id="modal-body"></div>
+    <div style="display:flex;justify-content:flex-end;gap:10px;margin-top:20px">
+      <button onclick="cerrarModal()" style="padding:8px 20px;border:1.5px solid #e2e8f0;border-radius:8px;background:#fff;font-weight:600">Cancelar</button>
+      <button id="btn-guardar" style="padding:8px 20px;background:var(--primary);color:#fff;border-radius:8px">💾 Guardar</button>
+    </div>
+    <div class="sello">🏷️ Generado por César Prada · ESSA Alumbrado Navideño</div>
+  </div>
+</div>
+
+<!-- MODAL CONFIG PIN -->
+<div id="modal-cfg-pin" style="position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:2000;display:none;align-items:center;justify-content:center">
+  <div style="background:#fff;border-radius:16px;padding:36px;width:360px;box-shadow:0 20px 60px rgba(0,0,0,.3);text-align:center">
+    <div style="font-size:36px;margin-bottom:8px">🔐</div>
+    <div style="font-weight:800;font-size:18px;color:var(--primary);margin-bottom:6px">Acceso Configuración</div>
+    <div style="font-size:13px;color:#64748b;margin-bottom:20px">Solo el administrador puede acceder</div>
+    <div class="field" style="text-align:left"><label>Contraseña de administrador</label>
+      <div class="pass-wrap"><input id="cfg-pin-input" type="password" placeholder="Contraseña admin" autocomplete="off"/>
+        <button class="eye-btn" onclick="togglePass('cfg-pin-input','eye-cfg')" id="eye-cfg">👁️</button>
+      </div>
+    </div>
+    <div id="cfg-pin-err" style="color:#ef4444;font-size:13px;min-height:18px;margin-bottom:10px"></div>
+    <div style="display:flex;gap:10px">
+      <button onclick="cerrarPinCfg()" style="flex:1;padding:10px;border:1.5px solid #e2e8f0;border-radius:8px;background:#fff;font-weight:600">Cancelar</button>
+      <button onclick="verificarPinCfg()" style="flex:1;padding:10px;background:var(--primary);color:#fff;border-radius:8px">Entrar</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════
+// CREDENCIALES
+// ═══════════════════════════════════════
+var CRED_EMAIL="cesar.prada@essa.com.co";
+var CRED_PASS="essa2026";
+var CRED_ADMIN="essa_2026";
+
+// ═══════════════════════════════════════
+// CONFIG (colores y logos)
+// ═══════════════════════════════════════
+var CFG={
+  colorPrimary:"#0a3d62",
+  colorSecondary:"#1e6fa5",
+  colorAccent:"#22c55e",
+  colorBg:"#f1f5f9",
+  logoSidebar:null,   // base64
+  logoLogin:null      // base64
+};
+
+function aplicarColores(){
+  document.documentElement.style.setProperty("--primary",CFG.colorPrimary);
+  document.documentElement.style.setProperty("--secondary",CFG.colorSecondary);
+  document.documentElement.style.setProperty("--accent",CFG.colorAccent);
+  document.documentElement.style.setProperty("--bg",CFG.colorBg);
+}
+
+// ═══════════════════════════════════════
+// DATOS
+// ═══════════════════════════════════════
+var ESTADOS={Creada:"#9ca3af",Presentada:"#3b82f6","En revisión":"#f59e0b",Aprobada:"#22c55e",Rechazada:"#ef4444",Archivada:"#1f2937"};
+var SEGMENTOS=["Gobierno","Empresas"];
+var TIPOS=["Alquiler ESSA","Aliado - Two Design SAS","Aliado - Viman SAS","Proyecto ESSA - Diseños","Proyecto ESSA - Fabricación","Proyecto ESSA - Instalación/Montaje","Proyecto ESSA - Mantenimiento"];
+var fmt=function(n){return new Intl.NumberFormat("es-CO",{style:"currency",currency:"COP",maximumFractionDigits:0}).format(n);};
+
+var DB={
+  ejecutivos:[
+    {id:1,nombre:"Jennifer Castillo",segmento:"Gobierno",foto:null},
+    {id:2,nombre:"Jesús Llanes",segmento:"Gobierno",foto:null},
+    {id:3,nombre:"César Chávez",segmento:"Empresas",foto:null},
+    {id:4,nombre:"Jimena Omaña",segmento:"Empresas",foto:null},
+    {id:5,nombre:"César Andrés Prada",segmento:"Técnico Transversal",foto:null}
+  ],
+  aliados:[
+    {id:1,nombre:"Two Design SAS",descripcion:"Diseño y fabricación de alumbrado",foto:null,activo:true},
+    {id:2,nombre:"Viman SAS",descripcion:"Instalación y montaje especializado",foto:null,activo:true}
+  ],
+  contratistas:[
+    {id:1,nombre:"Contratista #1",activo:true,foto:null},
+    {id:2,nombre:"Contratista #2",activo:true,foto:null},
+    {id:3,nombre:"Contratista #3",activo:true,foto:null},
+    {id:4,nombre:"Contratista #4",activo:true,foto:null},
+    {id:5,nombre:"Contratista #5",activo:true,foto:null}
+  ],
+  clientes:[
+    {id:1,razon:"Alcaldía de Bucaramanga",nit:"800.099.551-2",segmento:"Gobierno",cuentaESSA:"001-234567",ciudad:"Bucaramanga",lat:7.1193,lng:-73.1227,cNombre:"María Torres",cCargo:"Secretaria General",cEmail:"m.torres@bucaramanga.gov.co",cTel:"3001234567"},
+    {id:2,razon:"Aviatur S.A.",nit:"860.034.313-4",segmento:"Empresas",cuentaESSA:"002-891234",ciudad:"Floridablanca",lat:7.0643,lng:-73.0932,cNombre:"Jorge Rueda",cCargo:"Gerente",cEmail:"j.rueda@aviatur.com",cTel:"3109876543"},
+    {id:3,razon:"Alcaldía de Girón",nit:"890.201.493-1",segmento:"Gobierno",cuentaESSA:"003-112233",ciudad:"Girón",lat:7.0722,lng:-73.1686,cNombre:"Luis Gómez",cCargo:"Alcalde",cEmail:"alcalde@giron.gov.co",cTel:"3201112233"}
+  ],
+  oportunidades:[
+    {id:"OPP-001",clienteId:1,segmento:"Gobierno",ejecutivoId:1,tipoOferta:"Alquiler ESSA",valor:45000000,fechaCreacion:"2024-09-01",estado:"Aprobada",probabilidad:90,notasEjec:"Cliente muy interesado",notasTec:"Requiere 500m lineales",contratistas:[1],lat:7.1193,lng:-73.1227},
+    {id:"OPP-002",clienteId:2,segmento:"Empresas",ejecutivoId:3,tipoOferta:"Aliado - Two Design SAS",valor:28000000,fechaCreacion:"2024-09-05",estado:"En revisión",probabilidad:60,notasEjec:"Esperando aprobación",notasTec:"",contratistas:[2],lat:7.0643,lng:-73.0932},
+    {id:"OPP-003",clienteId:3,segmento:"Gobierno",ejecutivoId:2,tipoOferta:"Proyecto ESSA - Instalación/Montaje",valor:120000000,fechaCreacion:"2024-08-20",estado:"Presentada",probabilidad:70,notasEjec:"Gran escala",notasTec:"Diseño+instalación",contratistas:[1,4],lat:7.0722,lng:-73.1686},
+    {id:"OPP-004",clienteId:1,segmento:"Gobierno",ejecutivoId:1,tipoOferta:"Aliado - Viman SAS",valor:15000000,fechaCreacion:"2024-10-01",estado:"Creada",probabilidad:30,notasEjec:"",notasTec:"",contratistas:[],lat:7.1193,lng:-73.1227},
+    {id:"OPP-005",clienteId:2,segmento:"Empresas",ejecutivoId:4,tipoOferta:"Proyecto ESSA - Diseños",valor:9500000,fechaCreacion:"2024-09-10",estado:"Rechazada",probabilidad:0,notasEjec:"Presupuesto insuficiente",notasTec:"",contratistas:[],lat:7.0643,lng:-73.0932}
+  ],
+  actividades:[
+    {id:1,fecha:"2024-09-02",tipo:"Reunión",responsableId:1,oportunidadId:"OPP-001",clienteId:1,descripcion:"Presentación inicial",estado:"Completada"},
+    {id:2,fecha:"2024-09-21",tipo:"Llamada",responsableId:3,oportunidadId:"OPP-002",clienteId:2,descripcion:"Seguimiento propuesta aliado",estado:"Completada"},
+    {id:3,fecha:"2024-10-10",tipo:"Visita técnica",responsableId:5,oportunidadId:"OPP-003",clienteId:3,descripcion:"Levantamiento de información",estado:"Pendiente"}
+  ],
+  metas:[
+    {id:1,anio:"2024",tipoOferta:"Alquiler ESSA",segmento:"Gobierno",ejecutivoId:1,nCotizaciones:10,valorCotizado:200000000,valorAprobado:150000000},
+    {id:2,anio:"2024",tipoOferta:"Aliado - Two Design SAS",segmento:"Empresas",ejecutivoId:3,nCotizaciones:8,valorCotizado:120000000,valorAprobado:80000000}
+  ]
+};
+
+// ═══════════════════════════════════════
+// HELPERS UI
+// ═══════════════════════════════════════
+function togglePass(inputId,btnId){
+  var el=document.getElementById(inputId);
+  if(!el)return;
+  el.type=el.type==="password"?"text":"password";
+  var b=document.getElementById(btnId);
+  if(b)b.textContent=el.type==="password"?"👁️":"🙈";
+}
+function gv(id){var e=document.getElementById(id);return e?e.value:"";}
+function sello(){return '<div class="sello">🏷️ Generado por César Prada · ESSA Alumbrado Navideño · Sistema de Gestión Comercial Interno</div>';}
+function fld(id,lbl,val,tipo){val=val||"";tipo=tipo||"text";return '<div class="field"><label>'+lbl+'</label><input id="'+id+'" type="'+tipo+'" value="'+val+'"/></div>';}
+function txta(id,lbl,val){return '<div class="field"><label>'+lbl+'</label><textarea id="'+id+'" rows="3">'+(val||"")+'</textarea></div>';}
+function sel(id,lbl,opts,val){var ops=opts.map(function(o){return '<option value="'+o+'"'+(o===val?" selected":"")+">"+o+"</option>";}).join("");return '<div class="field"><label>'+lbl+'</label><select id="'+id+'">'+ops+'</select></div>';}
+function selObj(id,lbl,opts,val){var ops=opts.map(function(o){return '<option value="'+o.value+'"'+(String(o.value)===String(val)?" selected":"")+">"+o.label+"</option>";}).join("");return '<div class="field"><label>'+lbl+'</label><select id="'+id+'">'+ops+'</select></div>';}
+function fotoInput(inputId,previewId,actual){
+  var prev=actual?'<img src="'+actual+'" class="photo-circle" id="'+previewId+'"/>':"<div style='width:64px;height:64px;border-radius:50%;background:#dbeafe;display:flex;align-items:center;justify-content:center;font-size:26px' id='"+previewId+"'>👤</div>";
+  return '<div class="field"><label>Foto</label><div style="display:flex;align-items:center;gap:12px">'+prev+'<label class="upload-btn">📷 Cargar foto<input type="file" accept="image/*" style="display:none" onchange="previewFoto(this,\''+previewId+'\',\''+inputId+'\')"/></label></div><input type="hidden" id="'+inputId+'" value="'+(actual||"")+'"/></div>';
+}
+function previewFoto(input,previewId,hiddenId){
+  var file=input.files[0];if(!file)return;
+  var r=new FileReader();
+  r.onload=function(e){
+    var b64=e.target.result;
+    document.getElementById(hiddenId).value=b64;
+    var prev=document.getElementById(previewId);
+    if(prev){prev.outerHTML='<img src="'+b64+'" class="photo-circle" id="'+previewId+'"/>';}
+  };
+  r.readAsDataURL(file);
+}
+function logoInput(inputId,previewId,actual){
+  var prev=actual?'<img src="'+actual+'" style="max-height:60px;max-width:160px;border-radius:8px" id="'+previewId+'"/>':"<div style='padding:8px 14px;background:#f1f5f9;border-radius:8px;color:#64748b;font-size:12px' id='"+previewId+"'>Sin logo</div>";
+  return '<div style="display:flex;align-items:center;gap:12px;margin-bottom:8px">'+prev+'<label class="upload-btn">🖼️ Cargar logo<input type="file" accept="image/*" style="display:none" onchange="previewLogo(this,\''+previewId+'\',\''+inputId+'\')"/></label></div><input type="hidden" id="'+inputId+'" value="'+(actual||"")+'" />';
+}
+function previewLogo(input,previewId,hiddenId){
+  var file=input.files[0];if(!file)return;
+  var r=new FileReader();
+  r.onload=function(e){
+    var b64=e.target.result;
+    document.getElementById(hiddenId).value=b64;
+    var prev=document.getElementById(previewId);
+    if(prev)prev.outerHTML='<img src="'+b64+'" style="max-height:60px;max-width:160px;border-radius:8px" id="'+previewId+'"/>';
+  };
+  r.readAsDataURL(file);
+}
+function exportCSV(data,nombre){
+  if(!data.length)return;
+  var cols=Object.keys(data[0]).filter(function(k){return k!=="foto";});
+  var csv=[cols.join(",")].concat(data.map(function(r){return cols.map(function(c){var v=r[c];return '"'+(Array.isArray(v)?v.join("|"):(v==null?"":v))+'"';}).join(",");})).join("\n");
+  var a=document.createElement("a");
+  a.href=URL.createObjectURL(new Blob(["\uFEFF"+csv],{type:"text/csv;charset=utf-8"}));
+  a.download="essa_"+nombre+"_"+new Date().toISOString().slice(0,10)+".csv";
+  a.click();
+}
+
+// ═══════════════════════════════════════
+// LOGIN
+// ═══════════════════════════════════════
+function intentarLogin(){
+  var em=(document.getElementById("f-email").value||"").trim();
+  var pw=(document.getElementById("f-pass").value||"").trim();
+  if(em===CRED_EMAIL&&pw===CRED_PASS){
+    document.getElementById("pg-login").style.display="none";
+    var app=document.getElementById("pg-app");
+    app.style.display="flex";
+    document.getElementById("sb-name").textContent="César Andrés Prada";
+    document.getElementById("sb-role").textContent="Propietario";
+    document.getElementById("page-date").textContent=new Date().toLocaleDateString("es-CO",{weekday:"long",year:"numeric",month:"long",day:"numeric"});
+    actualizarLogoSidebar();
+    construirNav();
+    irA("dashboard");
+  }else{
+    document.getElementById("f-err").textContent="❌ Credenciales incorrectas.";
+  }
+}
+function cerrarSesion(){
+  document.getElementById("pg-login").style.display="flex";
+  document.getElementById("pg-app").style.display="none";
+  document.getElementById("f-pass").value="";
+  document.getElementById("f-err").textContent="";
+}
+function actualizarLogoSidebar(){
+  var w=document.getElementById("sb-logo-wrap");
+  if(!w)return;
+  if(CFG.logoSidebar){w.innerHTML='<img src="'+CFG.logoSidebar+'" style="max-height:48px;max-width:160px;object-fit:contain"/>';}
+  else{w.innerHTML="🎄";}
+  var ll=document.getElementById("login-logo");
+  if(ll){if(CFG.logoLogin)ll.innerHTML='<img src="'+CFG.logoLogin+'" style="max-height:72px;max-width:200px;object-fit:contain"/>';else ll.innerHTML="🎄";}
+}
+
+// ═══════════════════════════════════════
+// NAV
+// ═══════════════════════════════════════
+var NAV=[{id:"dashboard",icon:"📊",label:"Dashboard"},{id:"clientes",icon:"🏢",label:"Clientes"},{id:"oportunidades",icon:"💼",label:"Oportunidades"},{id:"actividades",icon:"📅",label:"Actividades"},{id:"metas",icon:"🎯",label:"Metas"},{id:"ejecutivos",icon:"👤",label:"Ejecutivos"},{id:"aliados",icon:"🤝",label:"Aliados"},{id:"contratistas",icon:"🔧",label:"Contratistas"},{id:"configuracion",icon:"⚙️",label:"Configuración"}];
+var TITLES={dashboard:"Dashboard Comercial",clientes:"Módulo de Clientes",oportunidades:"Oportunidades / Cotizaciones",actividades:"Actividades",metas:"Metas Comerciales",ejecutivos:"Ejecutivos",aliados:"Aliados ESSA",contratistas:"Pool de Contratistas",configuracion:"Configuración del Sistema"};
+var paginaActual="";
+var misCharts={};
+
+function construirNav(){
+  var menu=document.getElementById("nav-menu");menu.innerHTML="";
+  NAV.forEach(function(n){
+    var b=document.createElement("button");
+    b.className="nav-btn";b.id="nav-"+n.id;
+    b.innerHTML=n.icon+" "+n.label;
+    b.onclick=function(){
+      if(n.id==="configuracion"){abrirPinCfg();return;}
+      irA(n.id);
+    };
+    menu.appendChild(b);
+  });
+}
+function irA(pag){
+  paginaActual=pag;
+  document.querySelectorAll(".nav-btn").forEach(function(b){b.classList.remove("active");});
+  var nb=document.getElementById("nav-"+pag);if(nb)nb.classList.add("active");
+  document.getElementById("page-title").textContent=TITLES[pag]||"";
+  Object.values(misCharts).forEach(function(c){try{c.destroy();}catch(e){}});misCharts={};
+  var fn={dashboard:verDashboard,clientes:verClientes,oportunidades:verOportunidades,actividades:verActividades,metas:verMetas,ejecutivos:verEjecutivos,aliados:verAliados,contratistas:verContratistas,configuracion:verConfiguracion};
+  if(fn[pag])fn[pag]();
+}
+
+// ═══════════════════════════════════════
+// MODAL GENERAL
+// ═══════════════════════════════════════
+var fnGuardar=null;
+function abrirModal(titulo,html,fn){
+  document.getElementById("modal-title").textContent=titulo;
+  document.getElementById("modal-body").innerHTML=html;
+  fnGuardar=fn;
+  document.getElementById("btn-guardar").onclick=function(){if(fnGuardar)fnGuardar();};
+  document.getElementById("modal-overlay").style.display="flex";
+}
+function cerrarModal(){document.getElementById("modal-overlay").style.display="none";fnGuardar=null;}
+
+// ═══════════════════════════════════════
+// CONFIG PIN
+// ═══════════════════════════════════════
+function abrirPinCfg(){
+  document.getElementById("cfg-pin-input").value="";
+  document.getElementById("cfg-pin-err").textContent="";
+  document.getElementById("modal-cfg-pin").style.display="flex";
+}
+function cerrarPinCfg(){document.getElementById("modal-cfg-pin").style.display="none";}
+function verificarPinCfg(){
+  var pw=(document.getElementById("cfg-pin-input").value||"").trim();
+  if(pw===CRED_ADMIN){cerrarPinCfg();irA("configuracion");}
+  else{document.getElementById("cfg-pin-err").textContent="❌ Contraseña incorrecta.";}
+}
+
+// ═══════════════════════════════════════
+// CONFIGURACIÓN
+// ═══════════════════════════════════════
+function verConfiguracion(){
+  document.getElementById("page-content").innerHTML=`
+  <div class="cfg-section">
+    <h3>🎨 Colores del Sistema</h3>
+    <div class="color-row"><label>Color Primario (sidebar, encabezados)</label><input type="color" id="cfg-c1" value="${CFG.colorPrimary}" oninput="previsualizarColor('primary',this.value)"/><span id="cfg-c1-val" style="font-size:12px;color:#64748b">${CFG.colorPrimary}</span></div>
+    <div class="color-row"><label>Color Secundario (hover, activo)</label><input type="color" id="cfg-c2" value="${CFG.colorSecondary}" oninput="previsualizarColor('secondary',this.value)"/><span id="cfg-c2-val" style="font-size:12px;color:#64748b">${CFG.colorSecondary}</span></div>
+    <div class="color-row"><label>Color Acento (botones verde, aprobado)</label><input type="color" id="cfg-c3" value="${CFG.colorAccent}" oninput="previsualizarColor('accent',this.value)"/><span id="cfg-c3-val" style="font-size:12px;color:#64748b">${CFG.colorAccent}</span></div>
+    <div class="color-row"><label>Color de Fondo</label><input type="color" id="cfg-c4" value="${CFG.colorBg}" oninput="previsualizarColor('bg',this.value)"/><span id="cfg-c4-val" style="font-size:12px;color:#64748b">${CFG.colorBg}</span></div>
+    <button onclick="guardarColores()" style="padding:8px 20px;background:var(--primary);color:#fff;border-radius:8px;margin-top:8px">💾 Aplicar Colores</button>
+    <button onclick="resetColores()" style="padding:8px 20px;background:#e2e8f0;color:#374151;border-radius:8px;margin-top:8px;margin-left:8px">↺ Restaurar</button>
+  </div>
+
+  <div class="cfg-section">
+    <h3>🖼️ Logo del Sistema</h3>
+    <div style="margin-bottom:12px">
+      <div style="font-size:13px;color:#64748b;margin-bottom:6px;font-weight:600">Logo del Login (pantalla de inicio)</div>
+      ${logoInput("cfg-logo-login","prev-logo-login",CFG.logoLogin)}
+    </div>
+    <div>
+      <div style="font-size:13px;color:#64748b;margin-bottom:6px;font-weight:600">Logo del Sidebar (menú lateral)</div>
+      ${logoInput("cfg-logo-sidebar","prev-logo-sidebar",CFG.logoSidebar)}
+    </div>
+    <button onclick="guardarLogos()" style="padding:8px 20px;background:var(--primary);color:#fff;border-radius:8px;margin-top:12px">💾 Guardar Logos</button>
+  </div>
+
+  <div class="cfg-section">
+    <h3>👤 Fotos de Ejecutivos</h3>
+    <div style="display:flex;flex-wrap:wrap;gap:16px">
+      ${DB.ejecutivos.map(function(e){return '<div style="text-align:center;width:120px"><div style="margin:0 auto 6px">'+(e.foto?'<img src="'+e.foto+'" class="photo-circle" style="margin:auto"/>':'<div style="width:64px;height:64px;border-radius:50%;background:#dbeafe;display:flex;align-items:center;justify-content:center;font-size:26px;margin:auto">👤</div>')+'</div><div style="font-size:11px;font-weight:600;margin-bottom:6px">'+e.nombre+'</div><label class="upload-btn" style="font-size:11px;padding:4px 8px">📷 Foto<input type="file" accept="image/*" style="display:none" onchange="subirFotoEjec(this,'+e.id+')"/></label></div>';}).join("")}
+    </div>
+  </div>
+  ${sello()}`;
+}
+function previsualizarColor(cual,val){
+  var map={primary:"--primary",secondary:"--secondary",accent:"--accent",bg:"--bg"};
+  var ids={primary:"cfg-c1-val",secondary:"cfg-c2-val",accent:"cfg-c3-val",bg:"cfg-c4-val"};
+  document.documentElement.style.setProperty(map[cual],val);
+  var sp=document.getElementById(ids[cual]);if(sp)sp.textContent=val;
+}
+function guardarColores(){
+  CFG.colorPrimary=gv("cfg-c1");CFG.colorSecondary=gv("cfg-c2");CFG.colorAccent=gv("cfg-c3");CFG.colorBg=gv("cfg-c4");
+  aplicarColores();
+  alert("✅ Colores guardados y aplicados.");
+}
+function resetColores(){
+  CFG.colorPrimary="#0a3d62";CFG.colorSecondary="#1e6fa5";CFG.colorAccent="#22c55e";CFG.colorBg="#f1f5f9";
+  aplicarColores();verConfiguracion();
+}
+function guardarLogos(){
+  var l1=document.getElementById("cfg-logo-login");
+  var l2=document.getElementById("cfg-logo-sidebar");
+  if(l1&&l1.value)CFG.logoLogin=l1.value;
+  if(l2&&l2.value)CFG.logoSidebar=l2.value;
+  actualizarLogoSidebar();
+  alert("✅ Logos guardados.");
+}
+function subirFotoEjec(input,id){
+  var file=input.files[0];if(!file)return;
+  var r=new FileReader();
+  r.onload=function(e){
+    DB.ejecutivos=DB.ejecutivos.map(function(x){return x.id===id?Object.assign({},x,{foto:e.target.result}):x;});
+    verConfiguracion();
+  };
+  r.readAsDataURL(file);
+}
+
+// ═══════════════════════════════════════
+// DASHBOARD
+// ═══════════════════════════════════════
+function verDashboard(){
+  var o=DB.oportunidades;
+  var total=o.length,valCot=o.reduce(function(s,x){return s+x.valor;},0),valApr=o.filter(function(x){return x.estado==="Aprobada";}).reduce(function(s,x){return s+x.valor;},0);
+  var conv=total?Math.round(o.filter(function(x){return x.estado==="Aprobada";}).length/total*100):0;
+  var kpis=[{l:"Cotizaciones",v:total,i:"📋",c:"#3b82f6"},{l:"Valor Cotizado",v:fmt(valCot),i:"💰",c:CFG.colorPrimary},{l:"Valor Aprobado",v:fmt(valApr),i:"✅",c:CFG.colorAccent},{l:"Conversión",v:conv+"%",i:"📈",c:"#f59e0b"},{l:"Clientes",v:DB.clientes.length,i:"🏢",c:"#8b5cf6"},{l:"Actividades",v:DB.actividades.length,i:"📅",c:"#ec4899"}];
+  var kpiHTML=kpis.map(function(k){return '<div class="card" style="border-left:4px solid '+k.c+';margin-bottom:0"><div style="font-size:22px">'+k.i+'</div><div style="font-size:20px;font-weight:800;color:'+k.c+'">'+k.v+'</div><div style="font-size:12px;color:#64748b">'+k.l+'</div></div>';}).join("");
+  var estadoHTML=Object.entries(ESTADOS).map(function(e){var cnt=o.filter(function(x){return x.estado===e[0];}).length;return '<div style="display:flex;align-items:center;gap:6px;padding:6px 10px;background:#f8fafc;border-radius:8px"><div style="width:11px;height:11px;border-radius:50%;background:'+e[1]+'"></div><span style="font-size:13px">'+e[0]+': <b>'+cnt+'</b></span></div>';}).join("");
+  document.getElementById("page-content").innerHTML=
+    '<div class="kpi-grid">'+kpiHTML+'</div>'+
+    '<div class="chart-grid"><div class="card"><div style="font-weight:700;color:var(--primary);margin-bottom:12px">Embudo de Conversión</div><canvas id="ch-f" height="180"></canvas></div><div class="card"><div style="font-weight:700;color:var(--primary);margin-bottom:12px">Evolución Mensual</div><canvas id="ch-m" height="180"></canvas></div></div>'+
+    '<div class="chart-grid"><div class="card"><div style="font-weight:700;color:var(--primary);margin-bottom:12px">Por Segmento (M COP)</div><canvas id="ch-s" height="160"></canvas></div><div class="card"><div style="font-weight:700;color:var(--primary);margin-bottom:12px">Por Tipo de Oferta</div><canvas id="ch-t" height="160"></canvas></div></div>'+
+    '<div class="card"><div style="font-weight:700;color:var(--primary);margin-bottom:12px">📍 Mapa de Oportunidades</div>'+hacerMapa()+'<div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:10px">'+Object.entries(ESTADOS).map(function(e){return '<div style="display:flex;align-items:center;gap:4px;font-size:11px"><div style="width:9px;height:9px;border-radius:50%;background:'+e[1]+'"></div>'+e[0]+'</div>';}).join("")+'</div></div>'+
+    '<div class="card"><div style="font-weight:700;color:var(--primary);margin-bottom:10px">Estado de Oportunidades</div><div style="display:flex;flex-wrap:wrap;gap:8px">'+estadoHTML+'</div></div>'+sello();
+
+  var fd=[{l:"Creadas",v:o.length,c:"#9ca3af"},{l:"Presentadas",v:o.filter(function(x){return["Presentada","En revisión","Aprobada"].includes(x.estado);}).length,c:"#3b82f6"},{l:"En Revisión",v:o.filter(function(x){return["En revisión","Aprobada"].includes(x.estado);}).length,c:"#f59e0b"},{l:"Aprobadas",v:o.filter(function(x){return x.estado==="Aprobada";}).length,c:"#22c55e"}];
+  misCharts.f=new Chart(document.getElementById("ch-f"),{type:"bar",data:{labels:fd.map(function(x){return x.l;}),datasets:[{data:fd.map(function(x){return x.v;}),backgroundColor:fd.map(function(x){return x.c;}),borderRadius:6}]},options:{indexAxis:"y",plugins:{legend:{display:false}},scales:{x:{grid:{display:false}}}}});
+  var meses=["Ago","Sep","Oct","Nov"];
+  var md=meses.map(function(m,i){return{c:o.filter(function(x){return new Date(x.fechaCreacion).getMonth()===7+i;}).length,v:o.filter(function(x){return new Date(x.fechaCreacion).getMonth()===7+i;}).reduce(function(s,x){return s+x.valor;},0)/1e6};});
+  misCharts.m=new Chart(document.getElementById("ch-m"),{type:"line",data:{labels:meses,datasets:[{label:"Valor M COP",data:md.map(function(x){return x.v;}),borderColor:CFG.colorPrimary,backgroundColor:"rgba(10,61,98,.1)",tension:.3,fill:true},{label:"Cotizaciones",data:md.map(function(x){return x.c;}),borderColor:"#f59e0b",tension:.3,yAxisID:"y2"}]},options:{plugins:{legend:{position:"bottom"}},scales:{y:{},y2:{position:"right",grid:{drawOnChartArea:false}}}}});
+  misCharts.s=new Chart(document.getElementById("ch-s"),{type:"bar",data:{labels:["Gobierno","Empresas"],datasets:[{data:["Gobierno","Empresas"].map(function(s){return o.filter(function(x){return x.segmento===s;}).reduce(function(a,b){return a+b.valor;},0)/1e6;}),backgroundColor:["#3b82f6","#8b5cf6"],borderRadius:6}]},options:{plugins:{legend:{display:false}}}});
+  misCharts.t=new Chart(document.getElementById("ch-t"),{type:"bar",data:{labels:["Alquiler","Two Design","Viman","Diseños","Fabric.","Instalac.","Mant."],datasets:[{data:TIPOS.map(function(t){return o.filter(function(x){return x.tipoOferta===t;}).reduce(function(s,x){return s+x.valor;},0)/1e6;}),backgroundColor:CFG.colorAccent,borderRadius:6}]},options:{plugins:{legend:{display:false}}}});
+}
+function hacerMapa(){
+  var o=DB.oportunidades;var W=640,H=240;
+  var lats=o.map(function(x){return x.lat;}),lngs=o.map(function(x){return x.lng;});
+  var minLat=Math.min.apply(null,lats)-.05,maxLat=Math.max.apply(null,lats)+.05;
+  var minLng=Math.min.apply(null,lngs)-.05,maxLng=Math.max.apply(null,lngs)+.05;
+  var toX=function(lng){return((lng-minLng)/(maxLng-minLng))*(W-60)+30;};
+  var toY=function(lat){return H-((lat-minLat)/(maxLat-minLat))*(H-60)-30;};
+  var circles=o.map(function(x){var cl=DB.clientes.find(function(c){return c.id===x.clienteId;});var cx=toX(x.lng).toFixed(1),cy=toY(x.lat).toFixed(1);return'<circle cx="'+cx+'" cy="'+cy+'" r="14" fill="'+ESTADOS[x.estado]+'" stroke="#fff" stroke-width="2" opacity=".9"/><text x="'+cx+'" y="'+(+cy+4)+'" text-anchor="middle" fill="#fff" font-size="9" font-weight="bold">'+x.id.replace("OPP-","")+'</text><text x="'+cx+'" y="'+(+cy+22)+'" text-anchor="middle" fill="#1e293b" font-size="9">'+(cl?cl.ciudad:"")+'</text>';}).join("");
+  return'<svg width="'+W+'" height="'+H+'" style="background:#dbeafe;border-radius:8px;border:1px solid #bfdbfe">'+circles+'</svg>';
+}
+
+// ═══════════════════════════════════════
+// CLIENTES
+// ═══════════════════════════════════════
+function verClientes(busq){
+  busq=busq||"";
+  var lista=DB.clientes.filter(function(c){return!busq||c.razon.toLowerCase().includes(busq)||c.ciudad.toLowerCase().includes(busq);});
+  var rows=lista.map(function(c){return'<tr><td><b>'+c.razon+'</b></td><td>'+c.nit+'</td><td><span class="badge" style="background:'+(c.segmento==="Gobierno"?"#3b82f6":"#8b5cf6")+'">'+c.segmento+'</span></td><td>'+(c.cuentaESSA||"-")+'</td><td>'+c.ciudad+'</td><td>'+(c.cNombre||"-")+'</td><td><button style="padding:4px 8px;background:#3b82f6;color:#fff;border-radius:6px;margin-right:4px" onclick="editarCliente('+c.id+')">✏️</button><button style="padding:4px 8px;background:#ef4444;color:#fff;border-radius:6px" onclick="borrarCliente('+c.id+')">🗑️</button></td></tr>';}).join("");
+  document.getElementById("page-content").innerHTML='<div style="display:flex;gap:12px;margin-bottom:16px"><input placeholder="🔍 Buscar..." oninput="verClientes(this.value.toLowerCase())" style="flex:1"/><button style="padding:8px 16px;background:var(--primary);color:#fff;border-radius:8px" onclick="editarCliente(null)">+ Nuevo</button><button style="padding:8px 16px;background:var(--accent);color:#fff;border-radius:8px" onclick="exportCSV(DB.clientes,\'clientes\')">⬇ Exportar</button></div><div class="card" style="overflow:auto"><table><thead><tr><th>Razón Social</th><th>NIT</th><th>Segmento</th><th>Cuenta ESSA</th><th>Ciudad</th><th>Contacto</th><th>Acc.</th></tr></thead><tbody>'+rows+'</tbody></table></div>'+sello();
+}
+function editarCliente(id){
+  var c=id?DB.clientes.find(function(x){return x.id===id;}):{segmento:"Gobierno"};
+  var html='<div class="grid2">'+fld("cl-razon","Razón Social *",c.razon)+fld("cl-nit","NIT *",c.nit)+fld("cl-cuenta","Cuenta ESSA",c.cuentaESSA)+sel("cl-seg","Segmento",SEGMENTOS,c.segmento||"Gobierno")+fld("cl-ciudad","Ciudad",c.ciudad)+fld("cl-lat","Latitud",c.lat)+fld("cl-lng","Longitud",c.lng)+'</div><div style="font-weight:700;color:var(--primary);margin:12px 0 8px">Contacto Principal</div><div class="grid2">'+fld("cl-cn","Nombre",c.cNombre)+fld("cl-cc","Cargo",c.cCargo)+fld("cl-ce","Email",c.cEmail)+fld("cl-ct","Teléfono",c.cTel)+'</div>';
+  abrirModal(id?"Editar Cliente":"Nuevo Cliente",html,function(){
+    var item={id:id||Date.now(),razon:gv("cl-razon"),nit:gv("cl-nit"),cuentaESSA:gv("cl-cuenta"),segmento:gv("cl-seg"),ciudad:gv("cl-ciudad"),lat:parseFloat(gv("cl-lat"))||0,lng:parseFloat(gv("cl-lng"))||0,cNombre:gv("cl-cn"),cCargo:gv("cl-cc"),cEmail:gv("cl-ce"),cTel:gv("cl-ct")};
+    if(id)DB.clientes=DB.clientes.map(function(x){return x.id===id?item:x;});else DB.clientes.push(item);
+    cerrarModal();verClientes();
+  });
+}
+function borrarCliente(id){if(confirm("¿Eliminar cliente?")){DB.clientes=DB.clientes.filter(function(x){return x.id!==id;});verClientes();}}
+
+// ═══════════════════════════════════════
+// OPORTUNIDADES
+// ═══════════════════════════════════════
+var oppFiltro="Todos";
+function verOportunidades(){
+  var lista=oppFiltro==="Todos"?DB.oportunidades:DB.oportunidades.filter(function(o){return o.estado===oppFiltro;});
+  var fbtn=["Todos"].concat(Object.keys(ESTADOS)).map(function(e){return'<button class="filter-btn'+(oppFiltro===e?" active":"")+'" onclick="setFiltroOpp(\''+e+'\')">'+e+'</button>';}).join("");
+  var rows=lista.map(function(o){var cl=DB.clientes.find(function(c){return c.id===o.clienteId;});var ej=DB.ejecutivos.find(function(e){return e.id===o.ejecutivoId;});return'<tr><td style="font-weight:700;color:var(--primary)">'+o.id+'</td><td>'+(cl?cl.razon:"-")+'</td><td><span class="badge" style="background:'+(o.segmento==="Gobierno"?"#3b82f6":"#8b5cf6")+'">'+o.segmento+'</span></td><td>'+(ej?ej.nombre:"-")+'</td><td style="font-size:11px">'+o.tipoOferta+'</td><td>'+fmt(o.valor)+'</td><td><span class="badge" style="background:'+ESTADOS[o.estado]+'">'+o.estado+'</span></td><td>'+o.probabilidad+'%</td><td><button style="padding:4px 8px;background:#3b82f6;color:#fff;border-radius:6px;margin-right:4px" onclick="editarOpp(\''+o.id+'\')">✏️</button><button style="padding:4px 8px;background:#ef4444;color:#fff;border-radius:6px" onclick="borrarOpp(\''+o.id+'\')">🗑️</button></td></tr>';}).join("");
+  document.getElementById("page-content").innerHTML='<div style="margin-bottom:16px">'+fbtn+'<button style="padding:8px 16px;background:var(--primary);color:#fff;border-radius:8px;margin-right:8px" onclick="editarOpp(null)">+ Nueva</button><button style="padding:8px 16px;background:var(--accent);color:#fff;border-radius:8px" onclick="exportCSV(DB.oportunidades,\'oportunidades\')">⬇ Exportar</button></div><div class="card" style="overflow:auto"><table style="min-width:900px"><thead><tr><th>ID</th><th>Cliente</th><th>Segmento</th><th>Ejecutivo</th><th>Tipo Oferta</th><th>Valor</th><th>Estado</th><th>Prob%</th><th>Acc.</th></tr></thead><tbody>'+rows+'</tbody></table></div>'+sello();
+}
+function setFiltroOpp(f){oppFiltro=f;verOportunidades();}
+function editarOpp(id){
+  var o=id?DB.oportunidades.find(function(x){return x.id===id;}):{estado:"Creada",segmento:"Gobierno",tipoOferta:TIPOS[0],probabilidad:50,contratistas:[]};
+  var contChk=DB.contratistas.filter(function(c){return c.activo;}).map(function(c){return'<label style="display:flex;align-items:center;gap:4px;font-size:13px"><input type="checkbox" id="cc-'+c.id+'" '+((o.contratistas||[]).includes(c.id)?"checked":"")+'/> '+c.nombre+'</label>';}).join(" ");
+  // Tipos dinámicos incluyendo aliados
+  var tiposDinamicos=["Alquiler ESSA"].concat(DB.aliados.filter(function(a){return a.activo;}).map(function(a){return"Aliado - "+a.nombre;})).concat(["Proyecto ESSA - Diseños","Proyecto ESSA - Fabricación","Proyecto ESSA - Instalación/Montaje","Proyecto ESSA - Mantenimiento"]);
+  var html='<div class="grid2">'+selObj("op-cl","Cliente",DB.clientes.map(function(c){return{value:c.id,label:c.razon};}),o.clienteId)+sel("op-seg","Segmento",SEGMENTOS,o.segmento)+selObj("op-ej","Ejecutivo",DB.ejecutivos.map(function(e){return{value:e.id,label:e.nombre};}),o.ejecutivoId)+sel("op-tipo","Tipo Oferta",tiposDinamicos,o.tipoOferta)+fld("op-val","Valor (COP)",o.valor,"number")+sel("op-est","Estado",Object.keys(ESTADOS),o.estado)+fld("op-prob","Probabilidad %",o.probabilidad,"number")+fld("op-fc","Fecha Creación",o.fechaCreacion,"date")+'</div><div class="field"><label>Contratistas asignados</label><div style="display:flex;flex-wrap:wrap;gap:8px">'+contChk+'</div></div>'+txta("op-noe","Notas Ejecutivo",o.notasEjec)+txta("op-not","Notas Técnicas",o.notasTec);
+  abrirModal(id?"Editar Oportunidad":"Nueva Oportunidad",html,function(){
+    var conts=DB.contratistas.filter(function(c){var el=document.getElementById("cc-"+c.id);return el&&el.checked;}).map(function(c){return c.id;});
+    var item={id:id||"OPP-"+String(Date.now()).slice(-3),clienteId:parseInt(gv("op-cl")),segmento:gv("op-seg"),ejecutivoId:parseInt(gv("op-ej")),tipoOferta:gv("op-tipo"),valor:parseFloat(gv("op-val"))||0,estado:gv("op-est"),probabilidad:parseFloat(gv("op-prob"))||0,fechaCreacion:gv("op-fc"),notasEjec:gv("op-noe"),notasTec:gv("op-not"),contratistas:conts,lat:0,lng:0};
+    if(id)DB.oportunidades=DB.oportunidades.map(function(x){return x.id===id?item:x;});else DB.oportunidades.push(item);
+    cerrarModal();verOportunidades();
+  });
+}
+function borrarOpp(id){if(confirm("¿Eliminar?")){DB.oportunidades=DB.oportunidades.filter(function(x){return x.id!==id;});verOportunidades();}}
+
+// ═══════════════════════════════════════
+// ACTIVIDADES
+// ═══════════════════════════════════════
+function verActividades(){
+  var cards=DB.actividades.map(function(a){var cl=DB.clientes.find(function(c){return c.id===a.clienteId;});var ej=DB.ejecutivos.find(function(e){return e.id===a.responsableId;});return'<div style="background:#fff;border-radius:12px;padding:16px;box-shadow:0 2px 8px rgba(0,0,0,.06);margin-bottom:12px;display:flex;justify-content:space-between;align-items:flex-start"><div><div style="display:flex;gap:8px;margin-bottom:6px"><span class="badge" style="background:var(--primary)">'+a.tipo+'</span><span class="badge" style="background:'+(a.estado==="Completada"?"#22c55e":"#f59e0b")+'">'+a.estado+'</span><span style="font-size:12px;color:#64748b">'+a.fecha+'</span></div><div style="font-weight:600;margin-bottom:4px">'+a.descripcion+'</div><div style="font-size:12px;color:#64748b">👤 '+(ej?ej.nombre:"-")+' · 🏢 '+(cl?cl.razon:"-")+(a.oportunidadId?' · 📋 '+a.oportunidadId:"")+'</div></div><button style="padding:4px 8px;background:#3b82f6;color:#fff;border-radius:6px" onclick="editarActividad('+a.id+')">✏️</button></div>';}).join("");
+  document.getElementById("page-content").innerHTML='<div style="margin-bottom:16px"><button style="padding:8px 16px;background:var(--primary);color:#fff;border-radius:8px;margin-right:8px" onclick="editarActividad(null)">+ Nueva</button><button style="padding:8px 16px;background:var(--accent);color:#fff;border-radius:8px" onclick="exportCSV(DB.actividades,\'actividades\')">⬇ Exportar</button></div>'+cards+sello();
+}
+function editarActividad(id){
+  var a=id?DB.actividades.find(function(x){return x.id===id;}):{estado:"Pendiente",tipo:"Reunión"};
+  var html='<div class="grid2">'+fld("ac-f","Fecha",a.fecha,"date")+sel("ac-t","Tipo",["Reunión","Llamada","Visita técnica","Email","Otro"],a.tipo)+selObj("ac-r","Responsable",DB.ejecutivos.map(function(e){return{value:e.id,label:e.nombre};}),a.responsableId)+selObj("ac-cl","Cliente",DB.clientes.map(function(c){return{value:c.id,label:c.razon};}),a.clienteId)+selObj("ac-op","Oportunidad",[{value:"",label:"Sin oportunidad"}].concat(DB.oportunidades.map(function(o){return{value:o.id,label:o.id};})),a.oportunidadId)+sel("ac-e","Estado",["Pendiente","En progreso","Completada","Cancelada"],a.estado)+'</div>'+txta("ac-d","Descripción",a.descripcion);
+  abrirModal("Actividad",html,function(){
+    var item={id:id||Date.now(),fecha:gv("ac-f"),tipo:gv("ac-t"),responsableId:parseInt(gv("ac-r")),clienteId:parseInt(gv("ac-cl")),oportunidadId:gv("ac-op"),estado:gv("ac-e"),descripcion:gv("ac-d")};
+    if(id)DB.actividades=DB.actividades.map(function(x){return x.id===id?item:x;});else DB.actividades.push(item);
+    cerrarModal();verActividades();
+  });
+}
+
+// ═══════════════════════════════════════
+// METAS
+// ═══════════════════════════════════════
+function verMetas(){
+  var rows=DB.metas.map(function(m){var ej=DB.ejecutivos.find(function(e){return e.id===m.ejecutivoId;});return'<tr><td>'+m.anio+'</td><td><span class="badge" style="background:'+(m.segmento==="Gobierno"?"#3b82f6":"#8b5cf6")+'">'+m.segmento+'</span></td><td style="font-size:11px">'+m.tipoOferta+'</td><td>'+(ej?ej.nombre:"-")+'</td><td>'+m.nCotizaciones+'</td><td>'+fmt(m.valorCotizado)+'</td><td>'+fmt(m.valorAprobado)+'</td><td><button style="padding:4px 8px;background:#3b82f6;color:#fff;border-radius:6px" onclick="editarMeta('+m.id+')">✏️</button></td></tr>';}).join("");
+  document.getElementById("page-content").innerHTML='<div style="margin-bottom:16px"><button style="padding:8px 16px;background:var(--primary);color:#fff;border-radius:8px;margin-right:8px" onclick="editarMeta(null)">+ Nueva Meta</button><button style="padding:8px 16px;background:var(--accent);color:#fff;border-radius:8px" onclick="exportCSV(DB.metas,\'metas\')">⬇ Exportar</button></div><div class="card" style="overflow:auto"><table><thead><tr><th>Año</th><th>Segmento</th><th>Tipo Oferta</th><th>Ejecutivo</th><th>N° Cot.</th><th>Valor Cotizado</th><th>Valor Aprobado</th><th>Acc.</th></tr></thead><tbody>'+rows+'</tbody></table></div>'+sello();
+}
+function editarMeta(id){
+  var m=id?DB.metas.find(function(x){return x.id===id;}):{anio:"2025",segmento:"Gobierno",tipoOferta:TIPOS[0]};
+  var tiposDin=["Alquiler ESSA"].concat(DB.aliados.filter(function(a){return a.activo;}).map(function(a){return"Aliado - "+a.nombre;})).concat(["Proyecto ESSA - Diseños","Proyecto ESSA - Fabricación","Proyecto ESSA - Instalación/Montaje","Proyecto ESSA - Mantenimiento"]);
+  var html='<div class="grid2">'+fld("mt-a","Año",m.anio)+sel("mt-s","Segmento",SEGMENTOS,m.segmento)+sel("mt-t","Tipo Oferta",tiposDin,m.tipoOferta)+selObj("mt-e","Ejecutivo",DB.ejecutivos.map(function(e){return{value:e.id,label:e.nombre};}),m.ejecutivoId)+fld("mt-nc","N° Cotizaciones",m.nCotizaciones,"number")+fld("mt-vc","Valor Cotizado (COP)",m.valorCotizado,"number")+fld("mt-va","Valor Aprobado (COP)",m.valorAprobado,"number")+'</div>';
+  abrirModal("Meta Comercial",html,function(){
+    var item={id:id||Date.now(),anio:gv("mt-a"),segmento:gv("mt-s"),tipoOferta:gv("mt-t"),ejecutivoId:parseInt(gv("mt-e")),nCotizaciones:parseInt(gv("mt-nc"))||0,valorCotizado:parseFloat(gv("mt-vc"))||0,valorAprobado:parseFloat(gv("mt-va"))||0};
+    if(id)DB.metas=DB.metas.map(function(x){return x.id===id?item:x;});else DB.metas.push(item);
+    cerrarModal();verMetas();
+  });
+}
+
+// ═══════════════════════════════════════
+// EJECUTIVOS
+// ═══════════════════════════════════════
+function verEjecutivos(){
+  var segs=["Gobierno","Empresas","Técnico Transversal"];
+  var icons={Gobierno:"🏛️",Empresas:"🏢","Técnico Transversal":"🔧"};
+  var colores={Gobierno:"#3b82f6",Empresas:"#8b5cf6","Técnico Transversal":CFG.colorPrimary};
+  var html=segs.map(function(seg){
+    var cards=DB.ejecutivos.filter(function(e){return e.segmento===seg;}).map(function(e){
+      var img=e.foto?'<img src="'+e.foto+'" style="width:64px;height:64px;border-radius:50%;object-fit:cover;border:2px solid #e2e8f0;margin:0 auto 10px;display:block"/>':"<div style='width:64px;height:64px;border-radius:50%;background:#dbeafe;display:flex;align-items:center;justify-content:center;font-size:26px;margin:0 auto 10px'>👤</div>";
+      return'<div style="background:#fff;border-radius:16px;padding:20px;text-align:center;width:150px;box-shadow:0 2px 8px rgba(0,0,0,.06)">'+img+'<div style="font-weight:700;font-size:13px;margin-bottom:6px">'+e.nombre+'</div><span class="badge" style="background:'+colores[seg]+'">'+seg+'</span></div>';
+    }).join("");
+    return'<div style="margin-bottom:24px"><div style="font-weight:700;font-size:16px;color:var(--primary);margin-bottom:12px">'+icons[seg]+' '+seg+'</div><div style="display:flex;gap:16px;flex-wrap:wrap">'+cards+'</div></div>';
+  }).join("");
+  document.getElementById("page-content").innerHTML=html+sello();
+}
+
+// ═══════════════════════════════════════
+// ALIADOS
+// ═══════════════════════════════════════
+function verAliados(){
+  var cards=DB.aliados.map(function(a){
+    var img=a.foto?'<img src="'+a.foto+'" style="width:80px;height:80px;border-radius:50%;object-fit:cover;border:2px solid #e2e8f0;margin:0 auto 10px;display:block"/>':"<div style='width:80px;height:80px;border-radius:50%;background:#dbeafe;display:flex;align-items:center;justify-content:center;font-size:32px;margin:0 auto 10px'>🤝</div>";
+    return'<div style="background:#fff;border-radius:16px;padding:24px;text-align:center;width:200px;box-shadow:0 2px 8px rgba(0,0,0,.06);opacity:'+(a.activo?1:.5)+'">'+img+'<div style="font-weight:700;font-size:14px;margin-bottom:4px">'+a.nombre+'</div><div style="font-size:12px;color:#64748b;margin-bottom:10px">'+a.descripcion+'</div><span class="badge" style="background:'+(a.activo?"#22c55e":"#9ca3af")+';margin-bottom:10px;display:inline-block">'+(a.activo?"Activo":"Inactivo")+'</span><div style="display:flex;gap:6px;justify-content:center;margin-top:8px"><button style="padding:4px 10px;background:#3b82f6;color:#fff;border-radius:6px;font-size:12px" onclick="editarAliado('+a.id+')">✏️ Editar</button><button style="padding:4px 10px;background:'+(a.activo?"#f59e0b":"#22c55e")+';color:#fff;border-radius:6px;font-size:12px" onclick="toggleAliado('+a.id+')">'+(a.activo?"⏸":"▶")+'</button><button style="padding:4px 10px;background:#ef4444;color:#fff;border-radius:6px;font-size:12px" onclick="borrarAliado('+a.id+')">🗑️</button></div></div>';
+  }).join("");
+  document.getElementById("page-content").innerHTML='<div style="margin-bottom:16px"><button style="padding:8px 16px;background:var(--primary);color:#fff;border-radius:8px" onclick="editarAliado(null)">+ Nuevo Aliado</button></div><div style="display:flex;flex-wrap:wrap;gap:16px">'+cards+'</div>'+sello();
+}
+function editarAliado(id){
+  var a=id?DB.aliados.find(function(x){return x.id===id;}):{activo:true,descripcion:""};
+  var html='<div class="grid2">'+fld("al-nom","Nombre del Aliado *",a.nombre)+fld("al-desc","Descripción",a.descripcion)+'</div>'+fotoInput("al-foto","al-foto-prev",a.foto);
+  abrirModal(id?"Editar Aliado":"Nuevo Aliado",html,function(){
+    var item={id:id||Date.now(),nombre:gv("al-nom"),descripcion:gv("al-desc"),foto:document.getElementById("al-foto").value||null,activo:a.activo!==undefined?a.activo:true};
+    if(id)DB.aliados=DB.aliados.map(function(x){return x.id===id?item:x;});else DB.aliados.push(item);
+    cerrarModal();verAliados();
+  });
+}
+function toggleAliado(id){DB.aliados=DB.aliados.map(function(a){return a.id===id?Object.assign({},a,{activo:!a.activo}):a;});verAliados();}
+function borrarAliado(id){if(confirm("¿Eliminar aliado?")){DB.aliados=DB.aliados.filter(function(a){return a.id!==id;});verAliados();}}
+
+// ═══════════════════════════════════════
+// GUARDAR / CARGAR JSON
+// ═══════════════════════════════════════
+function guardarJSON(){
+  var datos={DB:DB,CFG:CFG,version:"1.0",fecha:new Date().toISOString()};
+  var json=JSON.stringify(datos,null,2);
+  var a=document.createElement("a");
+  a.href=URL.createObjectURL(new Blob([json],{type:"application/json"}));
+  a.download="crm_essa_"+new Date().toISOString().slice(0,10)+".json";
+  a.click();
+  alert("✅ Datos guardados correctamente.\nGuarda el archivo .json en un lugar seguro.");
+}
+function cargarJSON(input){
+  var file=input.files[0];if(!file)return;
+  var r=new FileReader();
+  r.onload=function(e){
+    try{
+      var datos=JSON.parse(e.target.result);
+      if(datos.DB)DB=datos.DB;
+      if(datos.CFG)CFG=datos.CFG;
+      aplicarColores();
+      actualizarLogoSidebar();
+      irA(paginaActual||"dashboard");
+      alert("✅ Datos cargados correctamente.");
+    }catch(err){
+      alert("❌ Error al leer el archivo. Asegúrate de cargar un archivo JSON válido del CRM ESSA.");
+    }
+  };
+  r.readAsText(file);
+  input.value="";
+}
+
+// ═══════════════════════════════════════
+// CONTRATISTAS
+// ═══════════════════════════════════════
+function verContratistas(){
+  var rows=DB.contratistas.map(function(c){
+    var img=c.foto?'<img src="'+c.foto+'" style="width:40px;height:40px;border-radius:50%;object-fit:cover;border:2px solid #e2e8f0"/>':"<div style='width:40px;height:40px;border-radius:50%;background:#dbeafe;display:flex;align-items:center;justify-content:center;font-size:20px'>🔧</div>";
+    return'<div style="background:#fff;border-radius:10px;padding:14px 18px;display:flex;align-items:center;gap:12px;box-shadow:0 2px 8px rgba(0,0,0,.06);margin-bottom:10px;opacity:'+(c.activo?1:.5)+'">'+img+'<span style="flex:1;font-weight:600">'+c.nombre+'</span><span class="badge" style="background:'+(c.activo?"#22c55e":"#9ca3af")+'">'+(c.activo?"Activo":"Inactivo")+'</span><button style="padding:4px 8px;background:#3b82f6;color:#fff;border-radius:6px;margin-right:4px" onclick="editarContratista('+c.id+')">✏️</button><button style="padding:4px 8px;background:'+(c.activo?"#f59e0b":"#22c55e")+';color:#fff;border-radius:6px;margin-right:4px" onclick="toggleContratista('+c.id+')">'+(c.activo?"⏸":"▶")+'</button><button style="padding:4px 8px;background:#ef4444;color:#fff;border-radius:6px" onclick="borrarContratista('+c.id+')">🗑️</button></div>';
+  }).join("");
+  document.getElementById("page-content").innerHTML='<div style="margin-bottom:16px"><button style="padding:8px 16px;background:var(--primary);color:#fff;border-radius:8px" onclick="editarContratista(null)">+ Agregar Contratista</button></div>'+rows+sello();
+}
+function editarContratista(id){
+  var c=id?DB.contratistas.find(function(x){return x.id===id;}):{activo:true};
+  var html=fld("ct-nom","Nombre del contratista",c.nombre)+fotoInput("ct-foto","ct-foto-prev",c.foto);
+  abrirModal(id?"Editar Contratista":"Nuevo Contratista",html,function(){
+    var item={id:id||Date.now(),nombre:gv("ct-nom"),activo:c.activo!==undefined?c.activo:true,foto:document.getElementById("ct-foto").value||null};
+    if(id)DB.contratistas=DB.contratistas.map(function(x){return x.id===id?item:x;});else DB.contratistas.push(item);
+    cerrarModal();verContratistas();
+  });
+}
+function toggleContratista(id){DB.contratistas=DB.contratistas.map(function(c){return c.id===id?Object.assign({},c,{activo:!c.activo}):c;});verContratistas();}
+function borrarContratista(id){if(confirm("¿Eliminar contratista?")){DB.contratistas=DB.contratistas.filter(function(c){return c.id!==id;});verContratistas();}}
+</script>
+</body>
+</html>
